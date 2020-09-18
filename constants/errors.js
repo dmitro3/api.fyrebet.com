@@ -1,0 +1,20 @@
+const keyMirror = require("keymirror");
+
+const Errors = keyMirror({
+    ERR_UNKNOWN: null,
+    ERR_INSUFFICIENT_BALANCE: null,
+    ERR_BETS_CLOSED: null,
+    ERR_INVALID_CURRENCY: null,
+    ERR_ROUND_INEXISTENT: null,
+    ERR_MESSAGE_TOO_SHORT: null,
+    ERR_MESSAGE_TOO_LONG: null,
+    ERR_INVALID_BET: null,
+    ERR_UNAUTHENTICATED: null,
+    ERR_WAIT_BEFORE_SENDING_MESSAGE: null,
+    ERR_INVALID_PICTURE: null,
+    ERR_WAIT_BEFORE_UPDATING_AVATAR: null
+
+});
+
+
+module.exports = Errors;

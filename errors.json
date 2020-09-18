@@ -1,0 +1,9 @@
+{
+    "ERR_UNKNOWN": "Unexpected error occured.",
+    "ERR_INSUFFICIENT_BALANCE": "Insufficient balance.",
+    "ERR_BETS_CLOSED": "Sorry, bets are closed.",
+    "ERR_INVALID_CURRENCY": "Selected currency is not available",
+    "ERR_ROUND_INEXISTENT": "Round inexistent",
+    "ERR_WAIT_BEFORE_UPDATING_AVATAR": "Please wait before updating your avatar again.",
+    "ERR_INVALID_PICTURE": "Please try with another image."
+}
