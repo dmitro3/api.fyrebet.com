@@ -32,7 +32,7 @@ const nodeMyAdmin = require('node-mysql-admin');
 
 const configuration = [
   cookieParser(),
-  express.static('static'),
+  // express.static('static'),
   cors({
     origin: true,
     credentials: true,

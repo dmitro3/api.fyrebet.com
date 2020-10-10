@@ -29,6 +29,7 @@
     "googleapis": "^59.0.0",
     "jimp": "^0.16.1",
     "keymirror": "^0.1.1",
+    "mongodb": "^3.6.2",
     "mysql": "^2.18.1",
     "node-input-validator": "^4.2.1",
     "node-mysql-admin": "^0.1.8",

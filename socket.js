@@ -19,6 +19,7 @@ const bindFortuneWheelHandler = require("./socket-handlers/fortune-wheel");
 
 
 const bindSessionRoom = require("./socket-rooms/session");
+const bindChatRoom = require("./socket-rooms/chat");
 
 
 
@@ -42,22 +43,23 @@ const initializeSocket = async (expressServer) => {
     ratesStore.bindSocketServer(io);
 
     bindSessionRoom(io);
+    bindChatRoom(io);
     // Start games
-    const fortuneWheelGame = require('./games/fortune-wheel');
-    await fortuneWheelGame.initialize(io);
+    // const fortuneWheelGame = require('./games/fortune-wheel');
+    // await fortuneWheelGame.initialize(io);
 
     // CRON-Like
     TimedActions.startAll();
 
     io.on("connection", async function (socket) {
+
+
         // Call dispatcher on session store to register new session
         dispatcher.dispatch({
             event: DispatcherEvents.SESSION_CONNECTED,
             sessionId: socket.id
         });
-
-
-        // Bind internal "middlewares"/handlers;
+        // Bind internal "middlewares"/handlers; TODO: move to socket-handlers
         bindSessionHandler(socket);
         bindChatHandler(socket);
         bindFortuneWheelHandler(socket);
@@ -72,9 +74,7 @@ const initializeSocket = async (expressServer) => {
             });
         });
     });
-
-
-
+    return io;
 }
 
 

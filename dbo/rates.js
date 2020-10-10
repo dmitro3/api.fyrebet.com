@@ -6,7 +6,7 @@ const getRates = async () => {
 }
 
 const saveRates = async (rates) => {
-    console.log('>>>Dbo: Saving rates');
+
     const insertValuesString = [...Array(rates.length).keys()].map(() => {
         return ("(?,?,?)");
     }).join(", ");

@@ -89,7 +89,7 @@ const getLastAvatarUpdate = async (userId) => {
   return result[0].avatarLastUpdated;
 }
 const getUserIdByAuthToken = async (authenticationToken) => {
-  let rows = await db.query(`select id from users where authentication_token  like "%61203%" limit 1`, [authenticationToken]);
+  let rows = await db.query(`select id from users where authentication_token = ? limit 1`, [authenticationToken]);
   //let rows = await db.query(`select id from users where authentication_token = ? limit 1`, [authenticationToken]);
   return rows && rows.length ? rows[0].id : undefined;
 }
@@ -128,6 +128,27 @@ const emailExists = (email) => {
 
 const getAllUsers = async () => {
   return await db.query('select * from users');
+
+}
+const getUserByUUID = async (authenticationToken) => {
+  let rows = await db.query(`select id, username from users where UUID = ? limit 1`, [authenticationToken]);
+  //let rows = await db.query(`select id from users where authentication_token = ? limit 1`, [authenticationToken]);
+  return rows && rows.length ? rows[0].id : undefined;
+}
+const getUserBrief = async (userUUID) => {
+  let results = await db.query(
+    `select users.username, 
+      avatars.url as avatarUrl,
+      users.UUID as userUUID
+      from users 
+      left join avatars on users.avatarUUID = avatars.UUID and avatars.size = 64
+      where users.UUID = ? 
+      limit 1`, [userUUID]
+  );
+  if (results && results.length) {
+    return results[0]
+  }
+  return null;
 }
 
-module.exports = { uniqueId, emailExists, getUserByToken: getByAuthToken, registerSession, createUser, getAuthenticationToken, getBotUsernamesList, getRandomBot, getBots, updateAvatar, getUserIdByAuthToken, setAvatar, getLastAvatarUpdate, getAllUsers };
+module.exports = { uniqueId, emailExists, getUserByToken: getByAuthToken, registerSession, createUser, getAuthenticationToken, getBotUsernamesList, getRandomBot, getBots, updateAvatar, getUserIdByAuthToken, setAvatar, getLastAvatarUpdate, getAllUsers, getUserBrief, getUserByUUID };

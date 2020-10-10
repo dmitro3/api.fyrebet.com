@@ -12,13 +12,28 @@ const dispatcher = require("./dispatcher");
 const ratesActions = require("./actions/rates");
 
 const UserRouter = require("./routers/user");
+const ChatRouter = require('./routers/chat');
+
+const bootstrapChat = require("./sql/bootstrapper")
 
 
 UserRouter.map(([method, route, func]) => {
   router[method](route, func);
 });
+ChatRouter.map(([method, route, func]) => {
+  router[method](route, func);
+});
+
+
+
+router.get("/init", async (req, res) => {
+  await bootstrapChat.createDefaultChatRooms();
+  res.send({ response: "OK" }).status(200);
+});
+
 
 router.get("/", (req, res) => {
+  console.log('Request.')
   res.send({ response: "Server is up." }).status(200);
 });
 

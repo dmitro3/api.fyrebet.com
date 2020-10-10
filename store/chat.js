@@ -1,17 +1,35 @@
-// import { EventEmitter } from "events";
+const { EventEmitter } = require("events");
 const dispatcher = require("../dispatcher");
 const DispatcherEvents = require("../constants/DispatcherEvents");
-// import { sendMessage } from "../socket";
-// const Errors = require("../constants/errors");
-// const CHANGE_EVENT = "change";
+const ChatDbo = require("../dbo/chat");
 
-const Constants = require("../constants/chat");
-// const { EVENTS } = require("../games/fortune-wheel");
+const Constants = require("../constants/Chat");
+
 const SocketEvents = require("../constants/SocketEvents");
-class ChatStore { //extends EventEmitter
+
+class ChatStore extends EventEmitter {
+
     constructor() {
-        this.messages = [];
+        super();
+
+        this.publicRooms = Constants.DefaultRooms;
+        this.messages = {}; // Index = public rooms.
+
+        this.chatRooms = {}; // It will be filled with all chat rooms indexed by their UUID. messages, number of online players, etc. will be updated
+        this.publicRooms.map(UUID => this.chatRooms[UUID] = {
+            online: 0,
+        });
+
+        // Lazy initialize public rooms. Release Initialized Chat Rooms later
+
+
     }
+    getPublicRooms() {
+        let ret = {};
+        this.publicRooms.map(UUID => ret[UUID] = this.chatRooms[UUID]);
+        return ret;
+    }
+
     getHistory() {
         return this.messages;
     }
@@ -23,8 +41,9 @@ class ChatStore { //extends EventEmitter
         return this.io;
     }
 
-    initialize(chatStatus) {
-        this.messages = chatStatus.messages;
+    initialize({ messages, publicRoomsArray }) {
+        this.messages = messages;
+        this.publicRooms = publicRoomsArray;
         this._isInitialzied = true;
     }
 
@@ -32,13 +51,29 @@ class ChatStore { //extends EventEmitter
         return !!this._isInitialzied;
     }
 
-    storeMessage(message) {
+    storeMessage(messageData) {
+        if (messageData.chatRoomUUID in this.chatRooms) {
+            this.chatRooms[chatRoomUUID].messages.push(message);
 
-        this.messages.push(message);
-        if (this.messages.length >= Constants.MAX_HISTORY) {
-            this.messages.shift();
+            if (this.chatRooms[chatRoomUUID].messages.length >= Constants.MAX_HISTORY) {
+                this.chatRooms[chatRoomUUID].messages.shift();
+            }
         }
-        this.io.emit(SocketEvents.CHAT_MESSAGE_RECEIVED, message)
+
+    }
+    getChatRoomData(chatRoomUUID) {
+        if (chatRoomUUID in this.chatRooms) {
+            return this.chatRooms[chatRoomUUID];
+        }
+        return undefined;
+    }
+
+    addChangeListener(dispatcherEvent, callback) {
+        this.on(dispatcherEvent, callback);
+    }
+
+    removeChangeListener(dispatcherEvent, callback) {
+        this.removeListener(dispatcherEvent, callback);
     }
 }
 
@@ -52,8 +87,12 @@ chatStore.dispatchToken = dispatcher.register(({ event, sessionId, data }) => {
         case (DispatcherEvents.CHAT_INITIALIZED):
             chatStore.initialize(data);
             break;
+        case (DispatcherEvents.CHAT_MESSAGE_RECEIVED):
+            break;
+
     }
-    //chatStore.emitChange(event, data);
+    chatStore.emit(event, data);
 });
 
 module.exports = chatStore;
+

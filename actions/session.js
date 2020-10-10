@@ -10,7 +10,7 @@ const dispatcher = require("../dispatcher");
 const SocketEvents = require("../constants/SocketEvents");
 
 const Errors = require("../constants/errors");
-const guid = require("../helpers/guid")
+const { generate: generateGuid } = require("../helpers/guid")
 const sharp = require('sharp');
 const CDN_FOLDER = require('../constants/Environment');
 
@@ -57,7 +57,7 @@ const uploadAvatar = async ({ base64, userId }) => { /// Type of Bufer
             const sizes = [32, 64, 128];
             const prototypeImage = sharp(Buffer.from(base64, 'base64')).png();
             const avatar = {
-                UUID: guid(),
+                UUID: generateGuid(),
                 sizes: {}
             } // Avatar UUID associated with all sizes. Each avatarId is an auto increment and represent a single avatar size.
             const saveAvatarToDisk = async (size) => {

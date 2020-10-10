@@ -55,6 +55,10 @@ class SessionStore extends EventEmitter {
     getByUserId(userId) {
         return this.userIdSessionPairs[userId];
     }
+    getUserBySessionId(sessionId) {
+        const sess = this.sessions[sessionId];
+        return sess ? sess.user : undefined;
+    }
     updateAvatar({ sessionId, userId, avatar }) {
         //console.log('sessionStore.updateAvatar', sessionId, userId, avatar);
         if (!userId in this.userIdSessionPairs) {

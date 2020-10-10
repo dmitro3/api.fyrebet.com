@@ -1,6 +1,6 @@
 const { Validator } = require('node-input-validator'); // Input validation
 
-const guid = require("../helpers/guid");
+
 
 const userActions = require("../actions/session");
 const UserDbo = require("../dbo/user");
@@ -99,6 +99,21 @@ const handlers = [
             console.log('NOT email and password isset');
         }
         //res.status(400).send(false);
+    }],
+    ['get', '/user-brief', async (req, res) => {
+        let userUUID = req.query.userUUID;
+        if (!userUUID) {
+            return res.send({
+                error: Errors.ERR_UNKNOWN
+            });
+        }
+        let userBrief = await UserDbo.getUserBrief(userUUID);
+        if (!userBrief) {
+            return res.send({
+                error: Errors.ERR_UNKNOWN
+            });
+        }
+        return res.send(userBrief);
     }],
     ['get', '/all-users', async (req, res) => {
         res.send(await UserDbo.getAllUsers());
