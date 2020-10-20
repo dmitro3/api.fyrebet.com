@@ -15,6 +15,10 @@ const Errors = keyMirror({
     ERR_WAIT_BEFORE_UPDATING_AVATAR: null,
     ERR_USER_NOT_FOUND: null,
     ERR_NO_ACCESS_TO_CONVERSATION: null,
+    ERR_COULD_NOT_CREATE_DUEL: null, 
+    ERR_USER_NOT_FOUND: null,
+    ERR_BLOCKED_BY_USER: null,
+    ERR_TARGET_USER_BLOCKED: null,
 
 });
 

@@ -4,6 +4,8 @@ const { db } = require('../db');
 
 const Constants = require("../constants/User")
 
+const User = require('../models/User')
+
 function uniqueId() {
   return CryptoJS.SHA256(new Date().getTime() + Math.random().toString(36)).toString(CryptoJS.enc.Hex);
 }
@@ -47,7 +49,25 @@ const registerSession = async (session_id, ip, user_agent) => {
   ]);
 }
 
-const getByAuthToken = async (authenticationToken) => {
+/**
+ * Returns userId if user exists
+ * @param {string} authenticationToken
+ * @returns {number}
+ */
+const getIdByAuthenticationToken = async (authenticationToken) => {
+  let [result] = await db.query('select id as userId from users where authentication_token = ? limit 1',[authenticationToken]);
+  if (result){
+    const {userId} = result;
+    return userId;
+  }
+  return null;
+} 
+
+/**
+ * @returns {User}
+ * @param {string} authenticationToken 
+ */
+const getByAuthenticationToken = async (authenticationToken) => {
 
   let rows = await db.query(`select users.* from users where users.authentication_token = ? limit 1`, [authenticationToken]);
   if (rows && rows.length && rows[0] && rows[0].id) {
@@ -125,16 +145,25 @@ const emailExists = (email) => {
   return result;
 }
 
-
+/**
+ * Dangerous
+ */
 const getAllUsers = async () => {
   return await db.query('select * from users');
 
 }
-const getUserByUUID = async (authenticationToken) => {
-  let rows = await db.query(`select id, username from users where UUID = ? limit 1`, [authenticationToken]);
-  //let rows = await db.query(`select id from users where authentication_token = ? limit 1`, [authenticationToken]);
-  return rows && rows.length ? rows[0].id : undefined;
+
+/**
+ * 
+ * @param {string} UUID 
+ * @returns {User?}
+ */
+const getUserByUUID = async (UUID) => {
+  let rows = await db.query(`select id, username from users where UUID = ? limit 1`, [UUID]);
+  return rows && rows.length ? new User(rows[0]) : null;
 }
+
+
 const getUserBrief = async (userUUID) => {
   let results = await db.query(
     `select users.username, 
@@ -151,4 +180,4 @@ const getUserBrief = async (userUUID) => {
   return null;
 }
 
-module.exports = { uniqueId, emailExists, getUserByToken: getByAuthToken, registerSession, createUser, getAuthenticationToken, getBotUsernamesList, getRandomBot, getBots, updateAvatar, getUserIdByAuthToken, setAvatar, getLastAvatarUpdate, getAllUsers, getUserBrief, getUserByUUID };
+module.exports = { uniqueId, emailExists, getByAuthenticationToken, registerSession, createUser, getAuthenticationToken, getBotUsernamesList, getRandomBot, getBots, updateAvatar, getUserIdByAuthToken, setAvatar, getLastAvatarUpdate, getAllUsers, getUserBrief, getUserByUUID, getIdByAuthenticationToken };

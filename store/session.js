@@ -1,25 +1,32 @@
 const { EventEmitter } = require("events");
-
-// import { sendMessage } from "../socket";
-// const Errors = require("../constants/errors");
-// const CHANGE_EVENT = "change";
-
 const dispatcher = require("../dispatcher");
-const DispatcherEvents = require("../constants/DispatcherEvents");
-const SocketEvents = require("../constants/SocketEvents");
+const ActionTypes = require("../constants/ActionTypes");
+
+const Session = require ("../models/Session");
 
 class SessionStore extends EventEmitter {
-    constructor() {
+
+    /**
+     * Stores Session models indexed by their sessionId - whenever a socket joins, their session will be stored here
+     * @typedef {Object.<string,Session>} Sessions
+     * @type {Sessions} 
+     */
+    sessions;
+    /**
+     * Eaasy-access for retrieving sessions by userId key
+     * @type {Object.<string,Number>} 
+     */
+    userIdSessionPairs;
+
+    constructor(){
         super();
-        this.sessions = {}; // Keys are socket.id (session id);
+        this.sessions = {};
         this.userIdSessionPairs = {};
     }
 
-    add({ sessionId, resources }) {
+    add({sessionId}) {
         // Register socket session in the database here
-        let insertData = { sessionId };
-        Object.assign(insertData, resources);
-        this.sessions[sessionId] = insertData;
+        this.sessions[sessionId] =  new Session(sessionId);
     }
 
     onUserAuthenticated({ user, sessionId }) {
@@ -29,9 +36,15 @@ class SessionStore extends EventEmitter {
         this.userIdSessionPairs[user.id] = sessionId;
     }
 
-    get(sessionId) {
+    /**
+     * Finds the item by its unique id.
+     * @param {String} sessionId  
+     * @returns {Session?}
+     */
+    get(sessionId){
         return this.sessions[sessionId];
     }
+
     remove({ sessionId, userId }) { // Can be either sessionId or userId 
         sessionId = sessionId || this.userIdSessionPairs[userId];
         const session = this.sessions[sessionId];
@@ -40,8 +53,6 @@ class SessionStore extends EventEmitter {
             if (session.user && session.user.id)
                 delete this.userIdSessionPairs[session.user.id];
         }
-
-
     }
 
     bindSocketServer(io) {
@@ -75,36 +86,44 @@ class SessionStore extends EventEmitter {
     addChangeListener(event, callback) {
         this.on(event, callback);
     }
-    emitChange({ event, sessionId, data }) {
+    emitChange({ actionType, sessionId, data }) {
         data && (data.sessionId = sessionId);
-        this.emit(event, data);
+        this.emit(actionType, data);
     }
-}
+
+    setClientData({sessionId, clientData}){
+        this.sessions[sessionId].setClientData(clientData);
+    }
+}  
 
 
 
 const sessionStore = new SessionStore();
 
 
-sessionStore.dispatchToken = dispatcher.register(({ event, sessionId, data }) => {
-    switch (event) {
-        case DispatcherEvents.SESSION_CONNECTED:
+sessionStore.dispatchToken = dispatcher.register(({ actionType, sessionId, data }) => {
+    switch (actionType) {
+        case ActionTypes.SESSION_CONNECTED:
             // New user connected
             sessionStore.add({ sessionId, resources: data });
             break;
-        case DispatcherEvents.SESSION_DISCONNECTED:
+        case ActionTypes.SESSION_DISCONNECTED:
             sessionStore.remove(sessionId);
             break;
-        case DispatcherEvents.SESSION_USER_AVATAR_CHANGED:
+        case ActionTypes.SESSION_USER_AVATAR_CHANGED:
             sessionId = sessionStore.updateAvatar({ userId: data.userId, avatar: data.avatar }); // Reassign sessionId - in case it was not found
             if (!sessionId) return; // Don't emit further
             break;
-        case DispatcherEvents.SESSION_USER_AUTHENTICATED:
+        case ActionTypes.SESSION_USER_AUTHENTICATED:
             const { user } = data;
             sessionStore.onUserAuthenticated({ user, sessionId });
             break;
+        case ActionTypes.CLIENT_DATA_RECEIVED:
+            const {clientData } = data;
+            sessionStore.setClientData({sessionId, clientData});
+            break;
     }
-    sessionStore.emitChange({ event, sessionId, data });
+    sessionStore.emitChange({ actionType, sessionId, data });
 });
 
 module.exports = sessionStore;

@@ -1,13 +1,16 @@
 const socketInterface = require('socket.io');
 
-const sessionStore = require('./store/session');
-const chatStore = require('./store/chat');
-const ratesStore = require('./store/rates');
 
 const dispatcher = require('./dispatcher');
 
 
-const DispatcherEvents = require("./constants/DispatcherEvents");
+const sessionStore = require('./store/session');
+const chatStore = require('./store/chat');
+const ratesStore = require('./store/rates');
+
+
+
+const ActionTypes = require("./constants/ActionTypes");
 const Errors = require("./constants/errors");
 const TimedActions = require('./timed-actions/bundle');
 
@@ -38,6 +41,7 @@ const initializeSocket = async (expressServer) => {
         callback(null, true);
     });
 
+    
     sessionStore.bindSocketServer(io);
     chatStore.bindSocketServer(io);
     ratesStore.bindSocketServer(io);
@@ -56,7 +60,7 @@ const initializeSocket = async (expressServer) => {
 
         // Call dispatcher on session store to register new session
         dispatcher.dispatch({
-            event: DispatcherEvents.SESSION_CONNECTED,
+            actionType: ActionTypes.SESSION_CONNECTED,
             sessionId: socket.id
         });
         // Bind internal "middlewares"/handlers; TODO: move to socket-handlers
@@ -68,7 +72,7 @@ const initializeSocket = async (expressServer) => {
         socket.on("disconnect", () => {
             setTimeout(() => {
                 dispatcher.dispatch({
-                    event: DispatcherEvents.SESSION_DISCONNECTED,
+                    actionType: ActionTypes.SESSION_DISCONNECTED,
                     sessionId: socket.id
                 });
             });

@@ -9,10 +9,11 @@ const sessionStore = require('../store/session');
 const ratesStore = require('../store/rates');
 const chatStore = require("../store/chat")
 const ratesDbo = require("../dbo/rates");
-const ChatDbo = require("../dbo/chat")
+const ChatDbo = require("../dbo/chat");
+const ActionTypes = require("../constants/ActionTypes");
 
-
-const ClientData = require("../models/clientData")
+const dispatcher = require('../dispatcher');
+const ClientData = require("../models/SessionClientData")
 module.exports = async function (socket) {
     const sessionId = socket.id;
 
@@ -26,12 +27,20 @@ module.exports = async function (socket) {
         const clientData = new ClientData(clientDataRaw);
         if (clientData.isValid()) {
             // Get chat room for user's language
-            console.log(clientData)
+            //console.log(clientData)
+
+            dispatcher.dispatch({
+                actionType: ActionTypes.CLIENT_DATA_RECEIVED,
+                data: {clientData},
+                sessionId
+            })
+
             const langPublicChat = await chatActions.getChatRoomData(clientData.language);
             // Make user join all the chat rooms
             [langPublicChat].map((chat) => {
                 socket.join(chat.chatRoomUUID);
             });
+
             socket.emit(SocketEvents.INITIAL_STATUS, {
                 rates: ratesStore.getRates(),
                 publicChatRooms: [langPublicChat]
@@ -43,17 +52,20 @@ module.exports = async function (socket) {
 
     socket.on(SocketEvents.AUTHENTICATE, async (authenticationToken) => {
         const session = sessionStore.get(sessionId);
-        if (!session) {
-            console.log('Something wrong on authentication');
-            return; // Something wrong
+        if (!session || !session.canAuthenticate()) {
+            console.log('Something wrong on authentication'); return; // Something wrong
         }
-        // Test begin
+
+
         user = await sessionActions.authenticateUser({ sessionId, authenticationToken });
 
-        if (user !== false) {
-            user.openChats = await ChatDbo.getUserChats(user.id);
+        if ('object' === typeof user && user.id) {
+            // User Is now authenticated
+
+            // Load chat history for the user - not a smart choice to implement it here but it will be refactored PROBS
+            user.chatHistory = await chatActions.getUserChatsHistory({userId: user.id, skip:0, limit:25, lang: session.clientData.language});
             // Make user join all the chat rooms
-            user.openChats.map((chat) => {
+            user.chatHistory.map((chat) => {
                 socket.join(chat.chatRoomUUID);
             });
             // Emit user data to socket

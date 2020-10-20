@@ -1,7 +1,7 @@
 const socket = require("../socket")
 
 
-const DispatcherEvents = require("../constants/DispatcherEvents");
+const DispatcherEvents = require("../constants/ActionTypes");
 const SocketEvents = require("../constants/SocketEvents");
 
 

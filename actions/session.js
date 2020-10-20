@@ -5,7 +5,7 @@ const UserDbo = require('../dbo/user');
 const AvatarDbo = require('../dbo/avatar');
 const UserConstants = require('../constants/User');
 
-const DispatcherEvents = require('../constants/DispatcherEvents');
+const ActionTypes = require('../constants/ActionTypes');
 const dispatcher = require("../dispatcher");
 const SocketEvents = require("../constants/SocketEvents");
 
@@ -17,6 +17,7 @@ const CDN_FOLDER = require('../constants/Environment');
 const fs = require("fs")
 const CryptoJS = require("crypto-js");
 const db = require('../db');
+const chatStore = require('../store/chat');
 
 
 
@@ -85,7 +86,7 @@ const uploadAvatar = async ({ base64, userId }) => { /// Type of Bufer
 
         // Notify internal socket dispatcher
         dispatcher.dispatch({
-            event: DispatcherEvents.SESSION_USER_AVATAR_CHANGED,
+            actionType: ActionTypes.SESSION_USER_AVATAR_CHANGED,
             data: {
                 userId,
                 avatar
@@ -107,12 +108,11 @@ const uploadAvatar = async ({ base64, userId }) => { /// Type of Bufer
 }
 
 const authenticateUser = async ({ sessionId, authenticationToken }) => {
-    let user = await UserDbo.getUserByToken(authenticationToken);
-
-    if (user && user.id) {
+    let user = await UserDbo.getByAuthenticationToken(authenticationToken);
+    if (user) {
         // Internal dispatcher to notify user/session store
         dispatcher.dispatch({
-            event: DispatcherEvents.SESSION_USER_AUTHENTICATED,
+            actionType: ActionTypes.SESSION_USER_AUTHENTICATED,
             sessionId,
             data: { user }
         });
@@ -123,4 +123,11 @@ const authenticateUser = async ({ sessionId, authenticationToken }) => {
 }
 
 
+const onClientDataReceived = ({sessionId, clientData}) => {
+    dispatcher.dispatch({
+        actionType: ActionTypes.CLIENT_DATA_RECEIVED,
+        data: {clientData},
+        sessionId
+    });
+}
 module.exports = { authenticateUser, uploadAvatar };

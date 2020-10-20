@@ -1,6 +1,6 @@
 const { EventEmitter } = require("events");
 const dispatcher = require("../dispatcher");
-const DispatcherEvents = require("../constants/DispatcherEvents");
+const ActionTypes = require("../constants/ActionTypes");
 const ChatDbo = require("../dbo/chat");
 
 const Constants = require("../constants/Chat");
@@ -68,30 +68,30 @@ class ChatStore extends EventEmitter {
         return undefined;
     }
 
-    addChangeListener(dispatcherEvent, callback) {
-        this.on(dispatcherEvent, callback);
+    addChangeListener(actionType, callback) {
+        this.on(actionType, callback);
     }
 
-    removeChangeListener(dispatcherEvent, callback) {
-        this.removeListener(dispatcherEvent, callback);
+    removeChangeListener(actionType, callback) {
+        this.removeListener(actionType, callback);
     }
 }
 
 const chatStore = new ChatStore();
 
-chatStore.dispatchToken = dispatcher.register(({ event, sessionId, data }) => {
-    switch (event) {
-        case (DispatcherEvents.CHAT_MESSAGE_RECEIVED):
+chatStore.dispatchToken = dispatcher.register(({ actionType, sessionId, data }) => {
+    switch (actionType) {
+        case (ActionTypes.CHAT_MESSAGE_RECEIVED):
             chatStore.storeMessage(data);
             break;
-        case (DispatcherEvents.CHAT_INITIALIZED):
+        case (ActionTypes.CHAT_INITIALIZED):
             chatStore.initialize(data);
             break;
-        case (DispatcherEvents.CHAT_MESSAGE_RECEIVED):
+        case (ActionTypes.CHAT_MESSAGE_RECEIVED):
             break;
 
     }
-    chatStore.emit(event, data);
+    chatStore.emit(actionType, data);
 });
 
 module.exports = chatStore;

@@ -1,7 +1,7 @@
 
 
 
-const DispatcherEvents = require("../constants/DispatcherEvents")
+const ActionTypes = require("../constants/ActionTypes")
 
 
 const UserDbo = require("../dbo/user");
@@ -27,7 +27,7 @@ const onRoundBegin = async ({ game, round }) => {
 const start = (game) => {
 
     game.addChangeListener(
-        DispatcherEvents.FORTUNE_WHEEL_ROUND_BEGIN,
+        ActionTypes.FORTUNE_WHEEL_ROUND_BEGIN,
         onRoundBegin
     );
 
@@ -35,7 +35,7 @@ const start = (game) => {
 
 const stop = (game) => {
     game.removeChangeListener(
-        DispatcherEvents.FORTUNE_WHEEL_ROUND_BEGIN,
+        ActionTypes.FORTUNE_WHEEL_ROUND_BEGIN,
         onRoundBegin
     );
 

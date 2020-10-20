@@ -33,8 +33,12 @@ router.get("/init", async (req, res) => {
 
 
 router.get("/", (req, res) => {
-  console.log('Request.')
+  console.log('Request.');
+  console.log(req.headers['user-agent'])
+  console.log(req.headers['x-forwarded-for'] || req.connection.remoteAddress)
+  console.log(req.query);
   res.send({ response: "Server is up." }).status(200);
+
 });
 
 
@@ -46,8 +50,6 @@ router.post("/is-email-registered", async (req, res) => {
   }
   res.send(false).status(404);
 });
-
-const debug = true;
 
 
 

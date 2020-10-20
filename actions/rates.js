@@ -1,7 +1,7 @@
 
 const RatesDbo = require("../dbo/rates");
 const dispatcher = require("../dispatcher")
-const DispatcherEvents = require("../constants/DispatcherEvents")
+const ActionTypes = require("../constants/ActionTypes")
 
 
 const setRates = async (rates, skipDbo) => {
@@ -11,7 +11,7 @@ const setRates = async (rates, skipDbo) => {
 
     // Dispatch event - store will save new rates
     dispatcher.dispatch({
-        event: DispatcherEvents.RATES_UPDATED,
+        actionType: ActionTypes.RATES_UPDATED,
         data: { rates }
     });
 

@@ -5,7 +5,8 @@ const Errors = require('../constants/errors');
 
 const { Validator } = require('node-input-validator'); // Input validation
 const ChatConstants = require('../constants/Chat');
-
+const ChatHistoryThread = require("../models/ChatHistoryThread");
+const { default: UserSocialBrief } = require('../models/UserBrief');
 
 
 const getMessages = async (chatRoomUUID, skip = 0, limit = 50) => {
@@ -55,38 +56,27 @@ const userTimeLeftToChat = async (userId) => {
 }
 
 
-const getUserChats = async (userId) => {
-    return await db.query(
-        `select 
-        cR.UUID as chatRoomUUID,
-        cR.type as chatRoomType,
-        count(cM.messageId) as unreadMessages,
-        otherPartyAvatar.url as iconUrl
-        from chatRoomParticipants cRP
-        left join chatRooms cR on cRP.chatRoomId = cR.chatRoomId
-        left join chatMessages cM on cR.chatRoomId = cM.chatRoomId and cM.timestamp > cRP.lastOpenTimestamp
-        left join chatRoomParticipants secondaryCRP on cRP.chatRoomId = secondaryCRP.chatRoomId and cR.type = 'PRIVATE' and secondaryCRP.userId != cRP.userId
-        left join users otherPartyUser on secondaryCRP.userId = otherPartyUser.id 
-        left join avatars otherPartyAvatar on otherPartyUser.avatarUUID = otherPartyAvatar.UUID and otherPartyAvatar.size = 32
-        where cRP.userId = ?
-        group by chatRoomUUID, chatRoomType, otherPartyAvatar.url`, [userId]);
+
+/**
+ * @returns {ChatHistoryThread[]}
+ */
+const getUserChatsHistory = async ({userId, lang = 'EN', skip = 0, limit = ChatConstants.CHAT_HISTORY_LOAD_CHUNKS}) => {
+    const queryResults = await db.query(`call getChatsHistory(?,?,?,?,@error); select @error as error;`, [userId,lang, skip, limit]);
+    
+    for (const queryResult of queryResults){
+        if (Array.isArray(queryResult) && queryResult.length) {
+            // Get first object and check what is it (error/ chatroom)
+            if ('error' in queryResult[0] && queryResult[0].error) {
+                throw queryResult[0]['error'];
+            }
+            if ('chatRoomUUID' in queryResult[0]) {
+                return queryResult;
+            }
+        }
+    }
+    return [];
 }
 
-// const getUserChat = async ({ userId, chatRoomUUID }) => {
-//     return await db.query(
-//         `select 
-//         cR.UUID as chatRoomUUID,
-//         otherPartyAvatar.url as avatarUrl,
-//         count(cM.messageId) as missedMessages
-//         from chatRoomParticipants cRP
-//         left join chatRooms cR on cRP.chatRoomId = cR.chatRoomId
-//         left join chatMessages cM on cR.chatRoomId = cM.chatRoomId and cM.timestamp > cRP.lastOpenTimestamp
-//         left join chatRoomParticipants secondaryCRP on cRP.chatRoomId = secondaryCRP.chatRoomId and cR.type = 'PRIVATE' and secondaryCRP.userId != cRP.userId
-//         left join users otherPartyUser on secondaryCRP.userId = otherPartyUser.id 
-//         left join avatars otherPartyAvatar on otherPartyUser.avatarUUID = otherPartyAvatar.UUID and size = 32
-//         where cRP.userId = ?
-//         group by chatRoomUUID, iconUrl`, [userId]);
-// }
 const getPrivateChatRoom = async (userUUID, targetUserUUID) => {
     // console.log('getPrivateChatRoom', userUUID, targetUserUUID);
     const [_, [{ chatRoomUUID, wasCreated, error }]] = await db.query('call `getPrivateChatroom`(?,?,@chatRoomUUID,@wasCreated,@error); select @chatRoomUUID as chatRoomUUID,@error as error, @wasCreated as wasCreated;', [
@@ -128,8 +118,6 @@ const getPublicRooms = async () => {
 
 
 
-
-
 const getChatRoomParties = async (chatRoomUUID) => {
     let results = await db.query(`select u.id 
     from chatRoomParticipants cRP 
@@ -147,18 +135,18 @@ const getChatRoomParties = async (chatRoomUUID) => {
 }
 const getChatRoom = async ({ chatRoomUUID, requestingUserId }) => {
 
-    const queryFeedback = await db.query('call `getChatRoom`(?,?,@error); select @error as procError;', [chatRoomUUID, requestingUserId]);
+    const queryResults = await db.query('call `getChatRoom`(?,?,@error); select @error as procError;', [chatRoomUUID, requestingUserId]);
 
     // Inspect each result
-    for (let queryResultPortion of queryFeedback) {
+    for (let queryResult of queryResults) {
 
-        if (Array.isArray(queryResultPortion) && queryResultPortion.length) {
+        if (Array.isArray(queryResult) && queryResult.length) {
             // Get first object and check what is it (error/ chatroom)
-            if ('procError' in queryResultPortion[0]) {
-                throw queryResultPortion[0]['procError'];
+            if ('procError' in queryResult[0] && queryResult[0].procError) {
+                throw queryResult[0]['procError'];
             }
-            if ('chatRoomUUID' in queryResultPortion[0]) {
-                const chatRoom = queryResultPortion[0];
+            if ('chatRoomUUID' in queryResult[0]) {
+                const chatRoom = queryResult[0];
                 try {
 
                     chatRoom.participants = JSON.parse(chatRoom.participants);
@@ -185,4 +173,32 @@ const updateLastSeen = async ({ chatRoomUUID, userId }) => {
     left join chatRooms cR on cRP.chatRoomId = cR.chatRoomId
     set cRP.lastOpenTimestamp = unix_timestamp() where cRP.userId = ? and cR.UUID = ?`, [userId, chatRoomUUID]);
 }
-module.exports = { userTimeLeftToChat, insertMessage, getMessages, getPrivateChatRoom, sendMessage, getPublicRooms, getChatRoom, getUserChats, getChatRoomParties, updateLastSeen };
+
+
+/**
+ * Returns a list of short user briefs, typically when client uses the search functionality.
+ * @param {number} userId - The user whom executes the query
+ * @param {string} query - The query to find matches
+ * @param {number} skip 
+ * @param {number} limit 
+ * @returns {UserSocialBrief[]}
+ */
+const chatSearchQuery = async ({userId, query, skip = 0, limit = 10}) => {
+
+    const queryFeedback = await db.query('call `chatSearchQuery`(?,?,?,?,@error); select @error as procError;', [userId, query, skip,limit]);
+     // Inspect each result
+     for (let queryResultPortion of queryFeedback) {
+
+        if (Array.isArray(queryResultPortion) && queryResultPortion.length) {
+            // Get first object and check what is it (error/ chatroom)
+            if ('procError' in queryResultPortion[0] && queryResultPortion[0].procError) {
+                throw queryResultPortion[0]['procError'];
+            }
+            if ('username' in queryResultPortion[0]) {
+                return queryResultPortion;
+            }
+        }
+    }
+    return [];
+}
+module.exports = { userTimeLeftToChat, insertMessage, getMessages, getPrivateChatRoom, sendMessage, getPublicRooms, getChatRoom, getUserChatsHistory, getChatRoomParties, updateLastSeen, chatSearchQuery };

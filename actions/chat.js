@@ -1,4 +1,4 @@
-const DispatcherEvents = require('../constants/DispatcherEvents');
+
 const SocketEvents = require('../constants/SocketEvents');
 
 const ChatConstants = require('../constants/Chat');
@@ -11,11 +11,12 @@ const { Validator } = require("node-input-validator");
 const dispatcher = require('../dispatcher');
 
 
-
+const chatActions = require("../actions/chat");
 const UserDbo = require("../dbo/user");
 const Langs = require('../constants/Langs');
 const { ERROR } = require('../constants/SocketEvents');
 const { ERR_NO_ACCESS_TO_CONVERSATION } = require('../constants/errors');
+const ActionTypes = require('../constants/ActionTypes');
 
 
 const sendChatMessage = async ({ sessionId, messageText, room = "EN" }) => {
@@ -49,10 +50,6 @@ const sendChatMessage = async ({ sessionId, messageText, room = "EN" }) => {
                 break;
 
         }
-
-
-
-
     let timeLeftToChat = await ChatDbo.userTimeLeftToChat(user.id);
     if (false) {//timeLeftToChat > 0) {
         throw ([Errors.ERR_WAIT_BEFORE_SENDING_MESSAGE, timeLeftToChat]);
@@ -73,7 +70,7 @@ const sendChatMessage = async ({ sessionId, messageText, room = "EN" }) => {
     };
 
     dispatcher.dispatch({
-        event: DispatcherEvents.CHAT_MESSAGE_RECEIVED,
+        actionType: ActionTypes.CHAT_MESSAGE_RECEIVED,
         sessionId,
         data: messageData
     });
@@ -109,7 +106,7 @@ const sendMessage = async ({ sessionId, chatRoomUUID, messageText }) => {
     });
 
     sentMessageUUID && dispatcher.dispatch({
-        event: DispatcherEvents.CHAT_MESSAGE_RECEIVED,
+        actionType: ActionTypes.CHAT_MESSAGE_RECEIVED,
         sessionId,
         data: {
             message: {
@@ -149,8 +146,29 @@ const getChatRoomData = async (chatRoomUUID) => {
 }
 
 
+const getUserChatsHistory = async ({userId, skip, limit, lang}) => {
+    
+    skip = parseInt(skip);
+    if (isNaN(skip) || skip < 0){
+        skip = 0;
+    }
+    limit = parseInt(limit);
+    if (isNaN(skip) || skip < ChatConstants.CHAT_HISTORY_LOAD_CHUNKS){
+        limit = ChatConstants.CHAT_HISTORY_LOAD_CHUNKS;
+    }
+
+    if (limit - skip != ChatConstants.CHAT_HISTORY_LOAD_CHUNKS){
+        // Request was forged. We only load chat by pre-defined chunks
+        throw Errors.ERR_UNKNOWN;
+    }
+    
+    // We expect LANG to be already validated in ClientData
+    
+    return await ChatDbo.getUserChatsHistory({userId, skip, limit, lang});
+}
+
 const onChatVisitedByUser = async ({ chatRoomUUID, userId }) => {
     // Mostly needed to set messages to seen status (like the blue ticks on WA)
     return await ChatDbo.updateLastSeen({ chatRoomUUID, userId })
 }
-module.exports = { sendMessage, getChatRoomData, onChatVisitedByUser } 
+module.exports = { sendMessage, getChatRoomData, onChatVisitedByUser, getUserChatsHistory } 

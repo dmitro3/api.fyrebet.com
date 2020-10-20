@@ -1,6 +1,6 @@
 
 const dispatcher = require("../dispatcher");
-const DispatcherEvents = require("../constants/DispatcherEvents");
+const ActionTypes = require("../constants/ActionTypes");
 const SocketEvents = require("../constants/SocketEvents");
 
 class RatesStore { //extends EventEmitter
@@ -36,16 +36,15 @@ class RatesStore { //extends EventEmitter
 
 const ratesStore = new RatesStore();
 
-ratesStore.dispatchToken = dispatcher.register(({ event, sessionId, data }) => {
-    switch (event) {
-        case (DispatcherEvents.RATES_UPDATED):
+ratesStore.dispatchToken = dispatcher.register(({ actionType, sessionId, data }) => {
+    switch (actionType) {
+        case (ActionTypes.RATES_UPDATED):
             const { rates } = data;
             ratesStore.setRates(rates);
             // Emit to sockets
             ratesStore.io.emit(SocketEvents.RATES_UPDATED, ratesStore.getRates());
             break;
     }
-    //ratesStore.emitChange(event, data);
 });
 
 module.exports = ratesStore;

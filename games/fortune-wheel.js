@@ -14,7 +14,7 @@ const FortuneWheelConstants = require("../constants/fortune-wheel");
 const sessionStore = require("../store/session");
 const socketRoom = require("../socket-rooms/fortune-wheel");
 
-const DispatcherEvents = require("../constants/DispatcherEvents");
+const ActionTypes = require("../constants/ActionTypes");
 
 const Bots = require('../bots/fortune-wheel');
 
@@ -124,7 +124,7 @@ class FortuneWheel extends EventEmitter {
 
     onRoundDrawn(round) {
         debug && console.log(`Round #${this.currentRound.roundId} drawn with roll ${this.currentRound.roll}`);
-        this.emitChange(DispatcherEvents.FORTUNE_WHEEL_ROUND_DRAWN, {
+        this.emitChange(ActionTypes.FORTUNE_WHEEL_ROUND_DRAWN, {
             round: round
         });
         setTimeout(() => {
@@ -197,7 +197,7 @@ class FortuneWheel extends EventEmitter {
         // Output results to people
 
         this.scheduleCurrentRoundDraw(this.currentRound);
-        this.emitChange(DispatcherEvents.FORTUNE_WHEEL_ROUND_BEGIN, {
+        this.emitChange(ActionTypes.FORTUNE_WHEEL_ROUND_BEGIN, {
             round: this.getInsensitiveRoundData()
         });
 
@@ -212,7 +212,7 @@ class FortuneWheel extends EventEmitter {
                 if (betId) {
                     const bet = { user, betAmount, betCurrency, multiplier };
                     this.storeBet(bet);
-                    this.emitChange(DispatcherEvents.FORTUNE_WHEEL_USER_BET, { bet });
+                    this.emitChange(ActionTypes.FORTUNE_WHEEL_USER_BET, { bet });
                     return betId;
                 }
             }

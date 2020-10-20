@@ -5,5 +5,6 @@ create table if not exists `duels`(
     duelStartConditionType varchar(55), -- For example when max parties reached, or when bets value contain 
     duelStartConditionValue varchar(255) null,
     maxParties int not null default 0, -- If 0, countless parties can join.
-    duelType int,
+    duelType varchar(50)
 )
+

@@ -1,6 +1,6 @@
 const keyMirror = require("keymirror");
 
-const DispatcherEvents = keyMirror({
+const ActionTypes = keyMirror({
     RATES_UPDATED: null,
     SESSION_CONNECTED: null,
     SESSION_DISCONNECTED: null,
@@ -13,6 +13,12 @@ const DispatcherEvents = keyMirror({
     CHAT_PUBLIC_ROOMS_LOADED: null,
     CHAT_ADD_SESSION_TO_ROOM: null,
     DUEL_CREATED: null,
+    DUEL_TERMINATED: null,
+    DUEL_ACCEPTED: null,
+    DUEL_REJECTED: null,
+    DUEL_BET_PLACED: null,
+    DUEL_USER_ABANDONED: null,
+    CLIENT_DATA_RECEIVED: null,
     SESSION_USER_LOGOUT: null,
     SESSION_AUTHENTICATION_TOKEN_RECEIVED: null,
     SESSION_USER_BALANCE_CHANGED: null,
@@ -21,4 +27,4 @@ const DispatcherEvents = keyMirror({
     FORTUNE_WHEEL_USER_BET: null,
 });
 
-module.exports = DispatcherEvents;
+module.exports = ActionTypes;

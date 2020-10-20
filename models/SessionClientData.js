@@ -4,6 +4,21 @@
 const Langs = require('../constants/Langs');
 
 class ClientData {
+    /**
+     * @property {String}
+     * @type {String}
+     */
+    language;
+    /**
+     * @property {Array}
+     * @type {Array}
+     */
+    languages;
+    /**
+     * @property {String}
+     * @type {String}
+     */
+    userAgent;
     constructor(clientDataRaw) {
         clientDataRaw = typeof clientDataRaw === 'object' ? clientDataRaw : {};
         const { language, languages, userAgent } = clientDataRaw;
