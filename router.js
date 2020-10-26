@@ -14,7 +14,9 @@ const ratesActions = require("./actions/rates");
 const UserRouter = require("./routers/user");
 const ChatRouter = require('./routers/chat');
 
-const bootstrapChat = require("./sql/bootstrapper")
+const bootstrapChat = require("./sql/bootstrapper");
+const jackpotRouletteDbo = require("./dbo/jackpotRoulette");
+const JackpotRouletteBet = require("./models/Jackpot/Bet");
 
 
 UserRouter.map(([method, route, func]) => {
@@ -137,6 +139,24 @@ router.get('/rates', async (req, res) => {
   res.send(
     await ratesActions.getRates()
   );
+});
+
+router.get('/realtest',async (req,res)=>{
+  const roundInfo = {
+    roundId: 12,
+    userId: 385
+  };
+  const bet = new JackpotRouletteBet({
+    amount:0.23,
+    currencyCode: 'BTC',
+    amountUsd: 10000
+  });
+  console.log(bet);
+  res.send(true);
+  return;
+
+  const f = await jackpotRouletteDbo.registerBet(bet,roundInfo);
+  res.send(f);
 });
 
 

@@ -4,7 +4,7 @@
         "node_modules",
         "static"
     ],
-    "script": "/var/www/fyrebet.com/index.js",
+    "script": "babel /var/www/fyrebet.com/index.js -d dist",
     "watch_options": {
         "followSymlinks": false
     },

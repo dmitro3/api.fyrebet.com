@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/teocns/node.teocns.com#readme",
   "dependencies": {
+    "@babel/node": "^7.12.1",
     "body-parser": "^1.19.0",
     "coinpayments": "^2.1.0",
     "cookie": "^0.4.1",
@@ -40,5 +41,11 @@
   "optionalDependencies": {
     "bufferutil": "^4.0.1",
     "utf-8-validate": "^5.0.2"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.12.1",
+    "@babel/core": "^7.12.3",
+    "@babel/preset-env": "^7.12.1",
+    "nodemon": "^2.0.6"
   }
 }
